@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Financial Report — {{ stats.file_name }}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; padding: 2rem; }
+    h1 { font-size: 2rem; color: #38bdf8; margin-bottom: 0.25rem; }
+    .subtitle { color: #94a3b8; margin-bottom: 2rem; font-size: 0.9rem; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .kpi-card { background: #1e293b; border-radius: 12px; padding: 1.5rem; border-left: 4px solid #38bdf8; }
+    .kpi-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+    .kpi-value { font-size: 1.8rem; font-weight: 700; color: #f1f5f9; margin-top: 0.25rem; }
+    .kpi-value.green { color: #4ade80; }
+    .kpi-value.red { color: #f87171; }
+    .section { background: #1e293b; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .section h2 { font-size: 1.1rem; color: #38bdf8; margin-bottom: 1rem; }
+    .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 1.5rem; }
+    .chart-card { background: #0f172a; border-radius: 8px; padding: 1rem; text-align: center; }
+    .chart-card img { max-width: 100%; border-radius: 6px; }
+    .ai-box { background: linear-gradient(135deg, #1e293b, #0f2744); border: 1px solid #38bdf8; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .ai-box h2 { color: #38bdf8; margin-bottom: 0.75rem; }
+    .ai-box p { line-height: 1.7; color: #cbd5e1; }
+    .footer { text-align: center; color: #475569; font-size: 0.8rem; margin-top: 2rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { background: #0f172a; padding: 0.6rem 1rem; text-align: left; color: #38bdf8; }
+    td { padding: 0.6rem 1rem; border-bottom: 1px solid #1e293b; }
+    tr:hover td { background: #1e293b; }
+  </style>
+</head>
+<body>
+  <h1>📊 Financial Report</h1>
+  <p class="subtitle">Source: {{ stats.file_name }} &nbsp;|&nbsp; Generated: {{ generated_at }} &nbsp;|&nbsp; {{ stats.row_count }} rows analyzed</p>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    {% if stats.total_revenue is defined %}
+    <div class="kpi-card">
+      <div class="kpi-label">Total Revenue</div>
+      <div class="kpi-value green">₹{{ "{:,.0f}".format(stats.total_revenue) }}</div>
+    </div>
+    {% endif %}
+    {% if stats.total_expenses is defined %}
+    <div class="kpi-card">
+      <div class="kpi-label">Total Expenses</div>
+      <div class="kpi-value red">₹{{ "{:,.0f}".format(stats.total_expenses) }}</div>
+    </div>
+    {% endif %}
+    {% if stats.net_profit is defined %}
+    <div class="kpi-card">
+      <div class="kpi-label">Net Profit</div>
+      <div class="kpi-value {{ 'green' if stats.net_profit >= 0 else 'red' }}">₹{{ "{:,.0f}".format(stats.net_profit) }}</div>
+    </div>
+    {% endif %}
+    {% if stats.profit_margin is defined %}
+    <div class="kpi-card">
+      <div class="kpi-label">Profit Margin</div>
+      <div class="kpi-value {{ 'green' if stats.profit_margin >= 20 else 'red' }}">{{ stats.profit_margin }}%</div>
+    </div>
+    {% endif %}
+    <div class="kpi-card">
+      <div class="kpi-label">Data Points</div>
+      <div class="kpi-value">{{ stats.row_count }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Columns</div>
+      <div class="kpi-value">{{ stats.col_count }}</div>
+    </div>
+  </div>
+
+  <!-- AI Insight -->
+  {% if ai_insight %}
+  <div class="ai-box">
+    <h2>🤖 AI Financial Insight</h2>
+    <p>{{ ai_insight }}</p>
+  </div>
+  {% endif %}
+
+  <!-- Charts -->
+  <div class="section">
+    <h2>📈 Visual Analysis</h2>
+    <div class="chart-grid">
+      {% if charts.trend %}
+      <div class="chart-card">
+        <img src="data:image/png;base64,{{ charts.trend }}" alt="Revenue vs Expenses Trend" />
+      </div>
+      {% endif %}
+      {% if charts.bar %}
+      <div class="chart-card">
+        <img src="data:image/png;base64,{{ charts.bar }}" alt="Column Totals" />
+      </div>
+      {% endif %}
+      {% if charts.margin %}
+      <div class="chart-card">
+        <img src="data:image/png;base64,{{ charts.margin }}" alt="Profit Margin" />
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Data Summary Table -->
+  <div class="section">
+    <h2>📋 Column Summary</h2>
+    <table>
+      <thead><tr><th>Column</th><th>Total</th><th>Mean</th></tr></thead>
+      <tbody>
+        {% for col, total in stats.totals.items() %}
+        <tr>
+          <td>{{ col }}</td>
+          <td>{{ "{:,.2f}".format(total) }}</td>
+          <td>{{ "{:,.2f}".format(stats.means[col]) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">Built by <a href="https://github.com/aadi4frnzzz-crypto" style="color:#38bdf8">aadi4frnzzz-crypto</a> | Notion Idea → GitHub Build Pipeline</div>
+</body>
+</html>
